@@ -4,9 +4,9 @@
  * Professora Sônia Virginia Alves França
  * Programador: Filipe Quirino Alves
  * Data Inicio: 28/06/2025
- * Programa para controlar os atendimentos diários
+ * Programa para controlar os atendimentos diários, Clinica Odontologica
  * Copilador: VScode
- * https://github.com/lipeqalves/Primeira_VA_Programacao1.git
+ * https://github.com/lipeqalves/Segunda_VA_Programacao1.git
  ***************************************************************/
 
 #include <stdio.h>
@@ -37,30 +37,16 @@ typedef struct{
     int tratamento; // 1-Extração, 2-Restauração, 3-Canal, 4-Limpeza
     int convenio; // 1-Sim, 0-Não
     float valorDoTratamento; // Valor do tratamento
-    float percentualMulheresCanal;
-    int homensConvenio;
-    float valorArrecadadoExtracao;
 }TPaciente;
 
-FILE *fparquivo,*frelatorio;
+FILE *fparquivo;
 TPaciente paciente_aux, paciente_nulo;
-// Função para inicializar o paciente nulo
 void abre_arquivo()
 {
     fparquivo = fopen("pacientes.dat", "r+b");
     if (fparquivo == NULL)
     {
         fparquivo = fopen("pacientes.dat", "w+b");
-        if (fparquivo == NULL)
-        {
-            printf("Erro ao abrir o arquivo!\n");
-            exit(1);
-        }
-    }
-    frelatorio = fopen("relatorio.dat", "r+b");
-    if (fparquivo == NULL)
-    {
-        fparquivo = fopen("relatorio.dat", "w+b");
         if (fparquivo == NULL)
         {
             printf("Erro ao abrir o arquivo!\n");
@@ -103,19 +89,20 @@ void cadastrarPaciente()
     int escolha;
     do{
         cabec();
-        printf("Cadastrar Paciente\n");
+        printf("Cadastrar Paciente\n\n");
+        linha();
         // Coletar os dados do paciente
-        printf("Codigo: ");
+        printf("Codigo.............: ");
         scanf("%d", &paciente_aux.codigo);
         getchar();
-        printf("Nome: ");
+        printf("Nome...............: ");
         fgets(paciente_aux.nome, sizeof(paciente_aux.nome), stdin);
         paciente_aux.nome[strcspn(paciente_aux.nome, "\n")] = '\0';
         printf("Sexo(1-Fem / 2-Mas): ");
         scanf("%d", &paciente_aux.sexo);
         printf("Tratamento(1-extração/2-restauração/3-canal/4-limpeza): ");
         scanf("%d", &paciente_aux.tratamento);
-        printf("Trabalha em empresa conveniada (1-sim/0-não): ");
+        printf("Tem convenio (1-sim/0-não)............................: ");
         scanf("%d", &paciente_aux.convenio);
         paciente_aux.valorDoTratamento = tratamentoValor(paciente_aux.tratamento, paciente_aux.convenio);
 
@@ -124,11 +111,12 @@ void cadastrarPaciente()
 
         printf("Paciente cadastrado com sucesso!\n");
         linha();
-        printf("\nDeseja cadastrar outro(1-sim/0-não)? ");
+        printf("\n\nDeseja cadastrar outro(1-sim/0-não)? ");
         scanf("%d", &escolha);
     }while (escolha == 1);
 }
 void listarPacientes()
+
 {
     cabec();
     
@@ -137,7 +125,7 @@ void listarPacientes()
 
     printf("Listagem Geral de Pacientes\n");
     linha();
-    printf("Código  | Nome                 | Sexo | Tratamento   | Convênio | Valor (R$)\n");
+    printf("Código  | Nome                 | Sexo | Tratamento    | Convênio | Valor (R$)\n");
     linha();
     while (fread(&paciente, sizeof(TPaciente), 1, fparquivo) == 1)
     {
@@ -153,10 +141,96 @@ void listarPacientes()
     linha();
 
     printf("\nPressione Enter para voltar ao menu...");
-    while (getchar() != '\n'); 
+    while (getchar() != '\n');
     getchar();
 }
-   main()
+
+float percentualMulheresCanal()
+{
+    TPaciente paciente;
+    int totalMulheres = 0, mulheresCanal = 0;
+    fseek(fparquivo, 0, SEEK_SET);
+    while (fread(&paciente, sizeof(TPaciente), 1, fparquivo) == 1)
+    {
+        if (paciente.sexo == 1)
+        {
+            totalMulheres++;
+            if (paciente.tratamento == 3)
+            {
+                mulheresCanal++;
+            }
+        }
+    }
+    if (totalMulheres == 0)
+        return 0.0;
+    return (mulheresCanal * 100.0) / totalMulheres;
+}
+
+int quantidadeHomensConvenio()
+{
+    TPaciente paciente;
+    int homensConvenio = 0;
+    fseek(fparquivo, 0, SEEK_SET);
+    while (fread(&paciente, sizeof(TPaciente), 1, fparquivo) == 1)
+    {
+        if (paciente.sexo == 2 && paciente.convenio == 1)
+        {
+            homensConvenio++;
+        }
+    }
+    return homensConvenio;
+}
+
+float mediaValorTratamentosHomens()
+{
+    TPaciente paciente;
+    int totalHomens = 0;
+    float soma = 0.0;
+    fseek(fparquivo, 0, SEEK_SET);
+    while (fread(&paciente, sizeof(TPaciente), 1, fparquivo) == 1)
+    {
+        if (paciente.sexo == 2)
+        {
+            soma += paciente.valorDoTratamento;
+            totalHomens++;
+        }
+    }
+    if (totalHomens == 0)
+        return 0.0;
+    return soma / totalHomens;
+}
+
+float valorArrecadadoExtracao()
+{
+    TPaciente paciente;
+    float soma = 0.0;
+    fseek(fparquivo, 0, SEEK_SET);
+    while (fread(&paciente, sizeof(TPaciente), 1, fparquivo) == 1)
+    {
+        if (paciente.tratamento == 1)
+        {
+            soma += paciente.valorDoTratamento;
+        }
+    }
+    return soma;
+}
+
+void relatorioEstatistico()
+{
+    cabec();
+    printf("Relatório Estatístico\n");
+    linha();
+    printf("Percentual de mulheres que fizeram canal.................: %.2f%%\n", percentualMulheresCanal());
+    printf("Quantidade de homens que trabalham em empresa conveniada.: %d\n", quantidadeHomensConvenio());
+    printf("Média do valor dos tratamentos dos homens................: R$ %.2f\n", mediaValorTratamentosHomens());
+    printf("Valor arrecadado com extração............................: R$ %.2f\n", valorArrecadadoExtracao());
+    linha();
+    printf("\nPressione Enter para voltar ao menu...");
+    while (getchar() != '\n');
+    getchar();
+}
+
+main()
    {
        int opcao;
        system("chcp 65001 > nul"); // Configura o console para UTF-8
@@ -182,7 +256,7 @@ void listarPacientes()
                listarPacientes();
                break;
            case 3:
-               printf("Relatorio Estatistico.\n");
+               relatorioEstatistico();
                break;
            case 0:
                fclose(fparquivo);
